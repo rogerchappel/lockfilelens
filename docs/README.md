@@ -7,6 +7,7 @@ This directory holds project documentation.
 - [Contributing guide](../CONTRIBUTING.md)
 - [Security policy](../SECURITY.md)
 - [Agent instructions](../AGENTS.md)
+- [Machine-readable orchestration state](orchestration.json)
 
 ## Additional docs
 

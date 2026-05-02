@@ -1,47 +1,106 @@
 # lockfilelens
 
-lockfilelens turns huge package lock diffs into concise risk notes reviewers can actually read.
+lockfilelens is a local-first CLI that turns package manager lockfile state and dependency resolution diffs into concise reviewer notes.
 
-## Status
+It inspects npm, pnpm, Yarn, and Bun project signals for package-manager drift, stale or missing lockfiles, duplicate ecosystem signals, and dependency changes. Core commands are read-only and make no network calls.
 
-This repository is an early StackForge scaffold. The public contract is the PRD-driven V1 described in `docs/PRD.md`; implementation should stay local-first, deterministic, and reviewable.
+## 60-second demo
 
-## What it will do
+```sh
+npm install
+npm test
 
-- Compare npm, pnpm, and Yarn lockfiles from refs or file paths.
-- Classify added, removed, upgraded, downgraded, direct, and transitive changes.
-- Emit Markdown and JSON risk summaries.
-- Stay offline by default; advisory enrichment is explicit opt-in.
+# Inspect a project for package-manager drift and stale/missing lockfiles.
+node dist/cli.js inspect tests/fixtures/drift --format markdown
+
+# Explain a lockfile change for a PR or agent handoff.
+node dist/cli.js diff \
+  --base tests/fixtures/npm-a/package-lock.json \
+  --head tests/fixtures/npm-b/package-lock.json \
+  --format markdown
+```
 
 ## Install
 
 ```sh
 npm install lockfilelens
+lockfilelens --help
 ```
 
 For local development from this repository:
 
 ```sh
 npm install
+npm run check
 npm test
+npm run build
+npm run smoke
 ```
 
-## CLI sketch
+## CLI reference
 
 ```sh
-lockfilelens diff main..HEAD
-lockfilelens diff --base ./fixtures/a/pnpm-lock.yaml --head ./fixtures/b/pnpm-lock.yaml
-lockfilelens summary --format markdown > LOCKFILE_REVIEW.md
+lockfilelens inspect [project-or-lockfile] [--format markdown|json|text]
+lockfilelens diff --base <lockfile> --head <lockfile> [--format markdown|json|text]
+lockfilelens summary [project-or-lockfile] [--format markdown|json|text]
 ```
 
-These commands describe the intended V1 interface from the PRD. Keep implementation changes aligned with `docs/TASKS.md` and update this section as behavior lands.
+### `inspect`
 
-## Local-first safety
+Reports project-level dependency hygiene:
 
-- No hidden network calls in core flows.
-- No credential exfiltration or secret value printing.
-- No destructive filesystem or Git operations without explicit user intent.
-- Prefer deterministic JSON/Markdown output that agents and humans can review.
+- recognized lockfiles: `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`
+- package-manager drift between `packageManager`, scripts, and lockfiles
+- missing lockfiles when `package.json` declares dependencies
+- lockfiles older than `package.json`
+- duplicate resolved package versions inside a lockfile
+
+### `diff`
+
+Compares two lockfiles of the same ecosystem and classifies changes as:
+
+- added
+- removed
+- upgraded
+- downgraded
+- changed
+
+When a nearby `package.json` exists, changes are marked as direct or transitive.
+
+### Formats
+
+- `markdown` — reviewer-oriented PR summary and checklist
+- `json` — stable machine-readable report for agents and CI
+- `text` — compact terminal summary
+
+## Example agent handoff snippet
+
+```md
+## Lockfile review
+
+Generated with:
+
+lockfilelens diff --base main/package-lock.json --head HEAD/package-lock.json --format markdown
+
+Key points:
+- Direct dependency changes match the task intent.
+- No package-manager drift detected.
+- Reviewer should focus on removals, downgrades, and duplicate resolved versions.
+```
+
+## Safety model
+
+- Read-only core commands.
+- Offline by default; no hidden advisory lookups, telemetry, or hosted service calls.
+- Structured errors redact obvious token/password/secret/API-key values.
+- No destructive filesystem or Git operations.
+
+## Non-goals
+
+- No automatic dependency upgrades.
+- No mandatory network audit.
+- No full SBOM platform.
+- No publish, merge, or PR automation.
 
 ## Verify
 
@@ -51,8 +110,6 @@ Run the local validation script before opening a pull request:
 npm test
 bash scripts/validate.sh
 ```
-
-`scripts/validate.sh` checks required repo files and runs package scripts that exist. Missing optional `agent-qc` is treated as a skip, not a failure.
 
 ## Documentation
 

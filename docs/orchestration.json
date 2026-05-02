@@ -1,0 +1,28 @@
+{
+  "project": "lockfilelens",
+  "status": "implemented-mvp",
+  "lanes": [
+    {
+      "name": "CLI skeleton + command surface",
+      "status": "complete",
+      "outputs": ["src/cli.ts", "package.json"]
+    },
+    {
+      "name": "Core engine + fixtures",
+      "status": "complete",
+      "outputs": ["src/engine.ts", "src/lockfiles.ts", "tests/fixtures"]
+    },
+    {
+      "name": "Reports + docs",
+      "status": "complete",
+      "outputs": ["src/reporters.ts", "README.md"]
+    },
+    {
+      "name": "Safety + validation",
+      "status": "complete",
+      "outputs": ["tests/lockfilelens.test.js", "scripts/smoke.sh", "scripts/validate.sh"]
+    }
+  ],
+  "validation": ["npm test", "bash scripts/validate.sh"],
+  "networkDefault": "disabled for core CLI workflows"
+}

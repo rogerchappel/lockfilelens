@@ -1,0 +1,16 @@
+lockfileVersion: '9.0'
+
+importers:
+  .:
+    dependencies:
+      chalk:
+        specifier: 5.3.0
+        version: 5.3.0
+
+packages:
+  /chalk@5.3.0:
+    resolution: {integrity: sha512-test}
+  /ansi-styles@6.2.1:
+    resolution: {integrity: sha512-test}
+  /supports-color@9.4.0:
+    resolution: {integrity: sha512-test}

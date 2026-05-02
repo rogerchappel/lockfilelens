@@ -3,16 +3,22 @@
   "version": "0.1.0",
   "description": "Local dependency lockfile diff explainer for PR and agent handoff reviews.",
   "type": "module",
-  "main": "./src/index.js",
+  "bin": {
+    "lockfilelens": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.js"
+    ".": "./dist/index.js"
   },
   "files": [
-    "src",
+    "dist",
     "README.md"
   ],
   "scripts": {
-    "test": "node --test"
+    "check": "tsc --noEmit",
+    "test": "npm run build -- --quiet && node --test",
+    "build": "tsc && node scripts/make-cli-executable.mjs",
+    "smoke": "bash scripts/smoke.sh"
   },
   "keywords": [
     "dependencies",
@@ -22,5 +28,9 @@
     "cli"
   ],
   "author": "StackForge User",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "typescript": "^5.9.3"
+  }
 }
