@@ -12,13 +12,16 @@
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "check": "tsc --noEmit",
     "test": "npm run build -- --quiet && node --test",
     "build": "tsc && node scripts/make-cli-executable.mjs",
-    "smoke": "bash scripts/smoke.sh"
+    "smoke": "bash scripts/smoke.sh",
+    "package:smoke": "node scripts/package-smoke.mjs",
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke && npm pack --dry-run"
   },
   "keywords": [
     "dependencies",
@@ -27,10 +30,26 @@
     "agents",
     "cli"
   ],
-  "author": "StackForge User",
+  "author": "Roger Chappel",
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^24.10.1",
     "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rogerchappel/lockfilelens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/rogerchappel/lockfilelens/issues"
+  },
+  "homepage": "https://github.com/rogerchappel/lockfilelens#readme",
+  "packageManager": "npm@11.6.2",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }
