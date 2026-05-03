@@ -34,8 +34,10 @@
 
 ## Acceptance Criteria
 
-- `pnpm check`, `pnpm test`, and `pnpm build` pass.
-- `scripts/validate.sh` passes from a clean checkout.
+- `npm run check`, `npm test`, `npm run build`, and `npm run smoke` pass.
+- `npm run package:smoke` installs the packed tarball and proves `lockfilelens --help` plus `--version` work from the installed package.
+- `npm run release:check` and `scripts/validate.sh` pass from a clean checkout.
+- `node ../releasebox/bin/releasebox.js check .` passes when dogfooding from the local ReleaseBox checkout.
 - The main CLI workflow works against fixtures without network access.
 - Generated Markdown and JSON reports are stable under snapshot tests.
-- README includes a 60-second demo path and explicit non-goals.
+- README includes a 60-second demo path, release checklist, and explicit non-goals.

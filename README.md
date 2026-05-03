@@ -107,8 +107,14 @@ Key points:
 Run the local validation script before opening a pull request:
 
 ```sh
-npm test
+npm run release:check
 bash scripts/validate.sh
+```
+
+`npm run release:check` runs typecheck, tests, source smoke, packed-package install smoke, and `npm pack --dry-run`. When dogfooding with a sibling ReleaseBox checkout, also run:
+
+```sh
+node ../releasebox/bin/releasebox.js check .
 ```
 
 ## Documentation
@@ -116,6 +122,7 @@ bash scripts/validate.sh
 - [Product requirements](docs/PRD.md)
 - [Task breakdown](docs/TASKS.md)
 - [Orchestration plan](docs/ORCHESTRATION.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
 - [Contributing guide](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 

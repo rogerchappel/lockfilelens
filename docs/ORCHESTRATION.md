@@ -23,8 +23,10 @@ Then copy this file into `docs/ORCHESTRATION.md` in the generated repo.
 ## Review Gates
 
 - Every implementation task lands through a PR-linked branch or worktree.
-- Run `scripts/validate.sh` before handoff.
+- Run `npm run release:check` and `scripts/validate.sh` before handoff.
+- During ReleaseBox dogfooding, also run `node ../releasebox/bin/releasebox.js check .` from this repo when the local ReleaseBox checkout is available.
 - Include generated report examples in the PR when relevant.
+- Keep npm/Homebrew publishing disabled until a maintainer explicitly reviews and approves it.
 - Use `branchbrief`/`prpack` after the first meaningful implementation slice.
 
 ## Integration Notes
