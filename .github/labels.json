@@ -1,0 +1,11 @@
+[
+  { "name": "release", "color": "0e8a16", "description": "Release planning, candidates, or publishing" },
+  { "name": "e2e", "color": "1d76db", "description": "End-to-end test coverage" },
+  { "name": "test-gap", "color": "fbca04", "description": "Known missing test confidence" },
+  { "name": "ci", "color": "5319e7", "description": "Continuous integration and automation" },
+  { "name": "packaging", "color": "c2e0c6", "description": "Package, artifact, installer, or distribution work" },
+  { "name": "npm", "color": "cb3837", "description": "npm publishing or package metadata" },
+  { "name": "homebrew", "color": "fbb040", "description": "Homebrew formula/tap work" },
+  { "name": "blocked", "color": "d73a4a", "description": "Blocked on a human decision or external dependency" },
+  { "name": "ai-assisted", "color": "bfdadc", "description": "AI helped draft or analyze; deterministic checks still required" }
+]

@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  github-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run local release gate
+        run: npm run release:check
+
+      - name: Build package artifact
+        run: npm pack
+
+      - name: Generate release notes
+        run: |
+          echo "## Changes" > RELEASE_NOTES.md
+          echo >> RELEASE_NOTES.md
+          git log --oneline $(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo HEAD~20)..HEAD >> RELEASE_NOTES.md
+          echo >> RELEASE_NOTES.md
+          cat docs/RELEASE_CHECKLIST.md >> RELEASE_NOTES.md
+
+      - name: Create GitHub release with package artifact
+        uses: softprops/action-gh-release@v2
+        with:
+          body_path: RELEASE_NOTES.md
+          files: '*.tgz'
+
+# npm publishing and Homebrew updates are intentionally disabled until reviewed.
