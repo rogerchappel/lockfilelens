@@ -1,20 +1,33 @@
 # Release candidate readiness
 
-Generated: 2026-05-05T21:25:03Z
+Generated: 2026-05-05T21:27:44Z
 Branch: `release-candidate/readiness`
-Base: `origin/main`
+Base: `main`
 
 ## Verification
 
-Status: BLOCKED - one or more local readiness checks failed
+Status: PASS
 
 Checks run:
+- `npm ci`
 - `npm run release:check`
 - `bash scripts/validate.sh`
 - `node releasebox check .`
 
 ## Check output summary
 
+    ## npm ci
+    ```
+    npm ci
+    ```
+    ```text
+    
+    added 3 packages, and audited 4 packages in 721ms
+    
+    found 0 vulnerabilities
+    ```
+    RESULT: 0 (0s)
+    
     ## npm run release:check
     ```
     npm run release:check
@@ -28,30 +41,75 @@ Checks run:
     > lockfilelens@0.1.0 check
     > tsc --noEmit
     
-    src/cli.ts(2,30): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/cli.ts(3,34): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/cli.ts(4,31): error TS2307: Cannot find module 'node:url' or its corresponding type declarations.
-    src/cli.ts(19,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(23,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,69): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(37,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(46,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,71): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(83,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(84,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(116,52): error TS2339: Property 'url' does not exist on type 'ImportMeta'.
-    src/cli.ts(125,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(125,27): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(128,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(129,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/engine.ts(1,38): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/engine.ts(2,31): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/lockfiles.ts(1,52): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/lockfiles.ts(2,50): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
+    
+    > lockfilelens@0.1.0 test
+    > npm run build -- --quiet && node --test
+    
+    
+    > lockfilelens@0.1.0 build
+    > tsc && node scripts/make-cli-executable.mjs --quiet
+    
+    ✔ parses npm package-lock and marks manifest dependencies direct (7.71575ms)
+    ✔ diff classifies added and upgraded direct dependencies (1.123667ms)
+    ✔ parses pnpm, yarn, and bun fixtures (1.465042ms)
+    ✔ inspect reports duplicate ecosystem signals and package-manager drift (0.696042ms)
+    ✔ renders stable markdown reviewer checklist (1.611958ms)
+    ✔ CLI emits JSON and redacts secret-like error values (219.119583ms)
+    ℹ tests 6
+    ℹ suites 0
+    ℹ pass 6
+    ℹ fail 0
+    ℹ cancelled 0
+    ℹ skipped 0
+    ℹ todo 0
+    ℹ duration_ms 325.646833
+    
+    > lockfilelens@0.1.0 smoke
+    > bash scripts/smoke.sh
+    
+    smoke ok
+    
+    > lockfilelens@0.1.0 package:smoke
+    > node scripts/package-smoke.mjs
+    
+    
+    > lockfilelens@0.1.0 build
+    > tsc && node scripts/make-cli-executable.mjs --quiet
+    
+    
+    added 1 package in 142ms
+    package smoke ok (0.1.0)
+    npm notice
+    npm notice package: lockfilelens@0.1.0
+    npm notice Tarball Contents
+    npm notice 1.1kB LICENSE
+    npm notice 3.4kB README.md
+    npm notice 31B dist/cli.d.ts
+    npm notice 5.3kB dist/cli.js
+    npm notice 383B dist/engine.d.ts
+    npm notice 7.6kB dist/engine.js
+    npm notice 267B dist/index.d.ts
+    npm notice 234B dist/index.js
+    npm notice 570B dist/lockfiles.d.ts
+    npm notice 9.1kB dist/lockfiles.js
+    npm notice 282B dist/reporters.d.ts
+    npm notice 4.5kB dist/reporters.js
+    npm notice 1.6kB dist/types.d.ts
+    npm notice 11B dist/types.js
+    npm notice 1.4kB package.json
+    npm notice Tarball Details
+    npm notice name: lockfilelens
+    npm notice version: 0.1.0
+    npm notice filename: lockfilelens-0.1.0.tgz
+    npm notice package size: 10.0 kB
+    npm notice unpacked size: 35.6 kB
+    npm notice shasum: 584e9118517fbac878ca806fad065db9c88545b6
+    npm notice integrity: sha512-mvFoHSA8EVQUr[...]iagTMvtMmmI3w==
+    npm notice total files: 15
+    npm notice
+    lockfilelens-0.1.0.tgz
     ```
-    RESULT: 2 (1s)
+    RESULT: 0 (5s)
     
     ## bash scripts/validate.sh
     ```
@@ -77,29 +135,7 @@ Checks run:
     > lockfilelens@0.1.0 check
     > tsc --noEmit
     
-    src/cli.ts(2,30): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/cli.ts(3,34): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/cli.ts(4,31): error TS2307: Cannot find module 'node:url' or its corresponding type declarations.
-    src/cli.ts(19,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(23,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,69): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(37,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(46,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,71): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(83,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(84,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(116,52): error TS2339: Property 'url' does not exist on type 'ImportMeta'.
-    src/cli.ts(125,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(125,27): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(128,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(129,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/engine.ts(1,38): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/engine.ts(2,31): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/lockfiles.ts(1,52): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/lockfiles.ts(2,50): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    FAIL: package script: check
+    PASS: package script: check
     
     > lockfilelens@0.1.0 test
     > npm run build -- --quiet && node --test
@@ -108,61 +144,31 @@ Checks run:
     > lockfilelens@0.1.0 build
     > tsc && node scripts/make-cli-executable.mjs --quiet
     
-    src/cli.ts(2,30): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/cli.ts(3,34): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/cli.ts(4,31): error TS2307: Cannot find module 'node:url' or its corresponding type declarations.
-    src/cli.ts(19,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(23,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,69): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(37,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(46,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,71): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(83,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(84,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(116,52): error TS2339: Property 'url' does not exist on type 'ImportMeta'.
-    src/cli.ts(125,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(125,27): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(128,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(129,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/engine.ts(1,38): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/engine.ts(2,31): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/lockfiles.ts(1,52): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/lockfiles.ts(2,50): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    FAIL: package script: test
+    ✔ parses npm package-lock and marks manifest dependencies direct (6.379167ms)
+    ✔ diff classifies added and upgraded direct dependencies (0.378625ms)
+    ✔ parses pnpm, yarn, and bun fixtures (1.844625ms)
+    ✔ inspect reports duplicate ecosystem signals and package-manager drift (0.809416ms)
+    ✔ renders stable markdown reviewer checklist (0.338125ms)
+    ✔ CLI emits JSON and redacts secret-like error values (107.016958ms)
+    ℹ tests 6
+    ℹ suites 0
+    ℹ pass 6
+    ℹ fail 0
+    ℹ cancelled 0
+    ℹ skipped 0
+    ℹ todo 0
+    ℹ duration_ms 191.449166
+    PASS: package script: test
     
     > lockfilelens@0.1.0 build
     > tsc && node scripts/make-cli-executable.mjs
     
-    src/cli.ts(2,30): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/cli.ts(3,34): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/cli.ts(4,31): error TS2307: Cannot find module 'node:url' or its corresponding type declarations.
-    src/cli.ts(19,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(23,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(29,69): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(37,5): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(46,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(48,71): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(83,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(84,7): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(116,52): error TS2339: Property 'url' does not exist on type 'ImportMeta'.
-    src/cli.ts(125,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(125,27): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(128,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/cli.ts(129,3): error TS2580: Cannot find name 'process'. Do you need to install type definitions for node? Try `npm i --save-dev @types/node`.
-    src/engine.ts(1,38): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/engine.ts(2,31): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    src/lockfiles.ts(1,52): error TS2307: Cannot find module 'node:fs' or its corresponding type declarations.
-    src/lockfiles.ts(2,50): error TS2307: Cannot find module 'node:path' or its corresponding type declarations.
-    FAIL: package script: build
+    PASS: package script: build
     NOTE: agent-qc not installed; skipping optional agent check
     
-    Validation failed.
+    Validation passed.
     ```
-    RESULT: 1 (1s)
+    RESULT: 0 (2s)
     
     ## ReleaseBox check
     ```
