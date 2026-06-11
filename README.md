@@ -129,3 +129,9 @@ node ../releasebox/bin/releasebox.js check .
 ## License
 
 MIT
+
+## Verification
+
+Run the release-readiness checks that match this package before publishing or opening a release PR.
+
+- `npm run package:smoke` - verify npm pack contents
