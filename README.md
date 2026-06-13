@@ -20,6 +20,14 @@ node dist/cli.js diff \
   --format markdown
 ```
 
+Generate both demo reports in one pass:
+
+```sh
+bash demo/run-lockfile-review.sh
+```
+
+See [Review Dependency Changes With LockfileLens](docs/tutorials/review-dependency-changes.md) for the fixture-backed walkthrough.
+
 ## Install
 
 ```sh
