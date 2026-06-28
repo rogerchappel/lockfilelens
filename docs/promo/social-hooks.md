@@ -5,6 +5,16 @@
 - Lockfile diffs are noisy. LockfileLens turns them into reviewer notes: what changed, whether it was direct or transitive, and what to check before merging.
 - Before a dependency PR merges, run one local command for package-manager drift and another for the lockfile diff.
 - Demo idea: inspect a drift fixture, then compare two npm lockfiles and show the generated reviewer checklist.
+- The demo writes `/tmp/lockfilelens-demo/drift-inspection.md` and `/tmp/lockfilelens-demo/npm-diff.md`, so a screen recording can show the generated reports without editing repo files.
+
+## Demo CTA
+
+```sh
+npm run build
+bash demo/run-lockfile-review.sh
+```
+
+Open the two generated Markdown reports and highlight the inspection heading, dependency review heading, and reviewer checklist.
 
 ## Launch note draft
 
