@@ -7,15 +7,14 @@ format and uses semantic versioning when versioned releases are published.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-04
+
 ### Added
 
 - Initial project setup.
 
 ## Release Links
 
-- Unreleased:
-  `https://github.com/rogerchappel/lockfilelens/compare/...HEAD`
-- Latest release:
-  `https://github.com/rogerchappel/lockfilelens/releases/latest`
-
-Replace placeholder links once the first release tag exists.
+[Unreleased]: https://github.com/rogerchappel/lockfilelens/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/rogerchappel/lockfilelens/releases/tag/v0.1.0
+[Latest release]: https://github.com/rogerchappel/lockfilelens/releases/latest
