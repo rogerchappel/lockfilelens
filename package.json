@@ -24,7 +24,8 @@
     "build": "tsc && node scripts/make-cli-executable.mjs",
     "smoke": "bash scripts/smoke.sh",
     "package:smoke": "node scripts/package-smoke.mjs",
-    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke && npm pack --dry-run"
+    "docs:smoke": "node scripts/package-smoke.mjs --release",
+    "release:check": "npm run check && npm test && npm run smoke && npm run package:smoke && npm run docs:smoke && npm pack --dry-run"
   },
   "keywords": [
     "dependencies",

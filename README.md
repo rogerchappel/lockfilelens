@@ -30,15 +30,29 @@ See [Review Dependency Changes With LockfileLens](docs/tutorials/review-dependen
 
 ## Install
 
+lockfilelens is distributed as a GitHub release package. npm registry publishing is
+currently disabled, so `npm install lockfilelens` will not work. Install v0.1.0
+directly from its release asset:
+
 ```sh
-npm install lockfilelens
+npm install https://github.com/rogerchappel/lockfilelens/releases/download/v0.1.0/lockfilelens-0.1.0.tgz
+lockfilelens --help
+```
+
+Or install the current source checkout:
+
+```sh
+git clone https://github.com/rogerchappel/lockfilelens.git
+cd lockfilelens
+npm install
+npm run build
+npm link
 lockfilelens --help
 ```
 
 For local development from this repository:
 
 ```sh
-npm install
 npm run check
 npm test
 npm run build
@@ -119,7 +133,11 @@ npm run release:check
 bash scripts/validate.sh
 ```
 
-`npm run release:check` runs typecheck, tests, source smoke, packed-package install smoke, and `npm pack --dry-run`. When dogfooding with a sibling ReleaseBox checkout, also run:
+`npm run release:check` runs typecheck, tests, source smoke, local packed-package
+install smoke, the documented GitHub release install smoke, and
+`npm pack --dry-run`. Both install smokes run `--help` plus fixture-backed
+`inspect` and `diff` commands in a disposable directory. When dogfooding with a
+sibling ReleaseBox checkout, also run:
 
 ```sh
 node ../releasebox/bin/releasebox.js check .
