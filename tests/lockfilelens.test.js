@@ -22,6 +22,26 @@ test('diff classifies added and upgraded direct dependencies', () => {
   assert.equal(report.changes.find((change) => change.name === 'is-number')?.direct, true);
 });
 
+test('diff compares every resolved version and directness deterministically', () => {
+  const report = diffLockfiles(fixture('npm-multi-a/package-lock.json'), fixture('npm-multi-b/package-lock.json'));
+
+  assert.deepEqual(report.changes, [
+    { name: 'foo', from: '1.0.0', to: '1.1.0', type: 'upgraded', direct: false, fromDirect: false, toDirect: false },
+    { name: 'shared', from: '3.0.0', to: '3.0.0', type: 'changed', direct: true, fromDirect: true, toDirect: false }
+  ]);
+  assert.deepEqual(report.summary, {
+    total: 2,
+    added: 0,
+    removed: 0,
+    upgraded: 1,
+    downgraded: 0,
+    changed: 1,
+    direct: 1,
+    transitive: 1
+  });
+  assert.equal(report.risk, 'medium');
+});
+
 test('parses pnpm, yarn, and bun fixtures', () => {
   const pnpm = diffLockfiles(fixture('pnpm-a/pnpm-lock.yaml'), fixture('pnpm-b/pnpm-lock.yaml'));
   assert.equal(pnpm.manager, 'pnpm');
