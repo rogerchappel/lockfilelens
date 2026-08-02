@@ -40,6 +40,12 @@ test('diff compares every resolved version and directness deterministically', ()
     transitive: 1
   });
   assert.equal(report.risk, 'medium');
+
+  const json = JSON.parse(renderDiff(report, 'json'));
+  assert.equal(json.changes[1].fromDirect, true);
+  assert.equal(json.changes[1].toDirect, false);
+  assert.match(renderDiff(report, 'markdown'), /\| shared \| 3\.0\.0 \| 3\.0\.0 \| changed \| direct -> transitive \|/);
+  assert.match(renderDiff(report, 'text'), /shared: 3\.0\.0 -> 3\.0\.0 \(changed, direct -> transitive\)/);
 });
 
 test('parses pnpm, yarn, and bun fixtures', () => {
