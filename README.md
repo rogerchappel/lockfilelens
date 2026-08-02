@@ -89,6 +89,18 @@ Compares two lockfiles of the same ecosystem and classifies changes as:
 
 When a nearby `package.json` exists, changes are marked as direct or transitive.
 
+Diffs compare the complete resolved-version set for each package name, rather
+than only its highest version. Unchanged version/scope pairs are discarded,
+equal versions with a scope change are paired, and then remaining versions are
+paired in ascending version order. Surplus head or base resolutions are
+reported as additions or removals. This makes multi-version changes stable and
+ensures an upgrade such as `{1.0.0, 2.0.0}` to `{1.1.0, 2.0.0}` is not hidden.
+
+Each changed resolution contributes one summary entry. A directness-only change
+uses the `changed` type and renders its scope transition (for example,
+`direct -> transitive`). Removals and downgrades are high risk; changes involving
+a direct resolution are at least medium risk.
+
 ### Formats
 
 - `markdown` — reviewer-oriented PR summary and checklist

@@ -7,6 +7,11 @@ format and uses semantic versioning when versioned releases are published.
 
 ## [Unreleased]
 
+### Fixed
+
+- Compare complete dependency resolution sets and directness so changes to one
+  of multiple coexisting versions are reported deterministically.
+
 ## [0.1.0] - 2026-05-04
 
 ### Added

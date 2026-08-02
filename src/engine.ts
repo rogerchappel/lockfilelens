@@ -27,25 +27,12 @@ export function diffLockfiles(basePath: string, headPath: string): DiffReport {
   const warnings = [...base.warnings, ...head.warnings];
   if (base.manager !== head.manager) warnings.push(`comparing different lockfile managers: ${base.manager} -> ${head.manager}`);
 
-  const basePackages = byName(base);
-  const headPackages = byName(head);
+  const basePackages = resolutionsByName(base);
+  const headPackages = resolutionsByName(head);
   const names = [...new Set([...basePackages.keys(), ...headPackages.keys()])].sort();
   const changes: DependencyChange[] = [];
   for (const name of names) {
-    const before = basePackages.get(name);
-    const after = headPackages.get(name);
-    if (!before && after) changes.push({ name, from: null, to: after.version, type: 'added', direct: after.direct });
-    else if (before && !after) changes.push({ name, from: before.version, to: null, type: 'removed', direct: before.direct });
-    else if (before && after && before.version !== after.version) {
-      const order = compareVersions(before.version, after.version);
-      changes.push({
-        name,
-        from: before.version,
-        to: after.version,
-        type: order < 0 ? 'upgraded' : order > 0 ? 'downgraded' : 'changed',
-        direct: before.direct || after.direct
-      });
-    }
+    changes.push(...compareResolutions(name, basePackages.get(name) ?? [], headPackages.get(name) ?? []));
   }
   const summary = {
     total: changes.length,
@@ -68,13 +55,72 @@ export function diffLockfiles(basePath: string, headPath: string): DiffReport {
   };
 }
 
-function byName(lockfile: LockfileInfo): Map<string, { version: string; direct: boolean }> {
-  const map = new Map<string, { version: string; direct: boolean }>();
+type Resolution = { version: string; direct: boolean };
+
+function resolutionsByName(lockfile: LockfileInfo): Map<string, Resolution[]> {
+  const map = new Map<string, Resolution[]>();
   for (const pkg of lockfile.packages) {
-    const existing = map.get(pkg.name);
-    if (!existing || compareVersions(existing.version, pkg.version) < 0) map.set(pkg.name, { version: pkg.version, direct: pkg.direct || existing?.direct === true });
+    const resolutions = map.get(pkg.name) ?? [];
+    resolutions.push({ version: pkg.version, direct: pkg.direct });
+    map.set(pkg.name, resolutions);
   }
+  for (const resolutions of map.values()) resolutions.sort(compareResolutionsStable);
   return map;
+}
+
+function compareResolutions(name: string, base: Resolution[], head: Resolution[]): DependencyChange[] {
+  const before = [...base];
+  const after = [...head];
+
+  // Unchanged version/scope pairs do not belong in the report.
+  for (let index = before.length - 1; index >= 0; index -= 1) {
+    const match = after.findIndex((item) => item.version === before[index].version && item.direct === before[index].direct);
+    if (match >= 0) {
+      before.splice(index, 1);
+      after.splice(match, 1);
+    }
+  }
+
+  // Pair equal versions next so a directness-only change remains explicit.
+  const pairs: Array<[Resolution, Resolution]> = [];
+  for (let index = before.length - 1; index >= 0; index -= 1) {
+    const match = after.findIndex((item) => item.version === before[index].version);
+    if (match >= 0) pairs.push([before.splice(index, 1)[0], after.splice(match, 1)[0]]);
+  }
+
+  before.sort(compareResolutionsStable);
+  after.sort(compareResolutionsStable);
+  while (before.length > 0 && after.length > 0) pairs.push([before.shift()!, after.shift()!]);
+
+  const changes: DependencyChange[] = pairs
+    .map(([from, to]) => ({
+      name,
+      from: from.version,
+      to: to.version,
+      type: changeType(from.version, to.version),
+      direct: from.direct || to.direct,
+      fromDirect: from.direct,
+      toDirect: to.direct
+    }));
+  for (const from of before) changes.push({ name, from: from.version, to: null, type: 'removed', direct: from.direct, fromDirect: from.direct, toDirect: null });
+  for (const to of after) changes.push({ name, from: null, to: to.version, type: 'added', direct: to.direct, fromDirect: null, toDirect: to.direct });
+  return changes.sort((left, right) => compareNullableVersions(left.from, right.from) || compareNullableVersions(left.to, right.to));
+}
+
+function changeType(from: string, to: string): DependencyChange['type'] {
+  const order = compareVersions(from, to);
+  return order < 0 ? 'upgraded' : order > 0 ? 'downgraded' : 'changed';
+}
+
+function compareResolutionsStable(left: Resolution, right: Resolution): number {
+  return compareVersions(left.version, right.version) || Number(right.direct) - Number(left.direct);
+}
+
+function compareNullableVersions(left: string | null, right: string | null): number {
+  if (left === right) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return compareVersions(left, right);
 }
 
 function collectDuplicateSignals(lockfiles: LockfileInfo[], scriptSignals: string[], packageManagerName?: PackageManager): string[] {

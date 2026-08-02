@@ -23,6 +23,18 @@ node dist/cli.js diff \
 
 The Markdown output summarizes added, removed, upgraded, downgraded, and changed packages, then labels direct and transitive changes when nearby package metadata is available.
 
+LockfileLens compares every distinct resolved version of a package. It first
+removes unchanged version/scope pairs, pairs equal versions whose directness
+changed, then pairs remaining resolutions in ascending version order. Any
+unpaired resolution is an addition or removal. Consequently, changing one
+version in a multi-version package is visible even when the highest version is
+unchanged, and repeated runs produce the same change ordering.
+
+The JSON format includes `fromDirect` and `toDirect` on every change (`null`
+when that side does not exist). Markdown and text show a scope transition when
+those values differ. Summaries count each changed resolution, not only each
+package name.
+
 ## Demo shortcut
 
 ```sh

@@ -43,6 +43,8 @@ export interface DependencyChange {
   to: string | null;
   type: ChangeType;
   direct: boolean;
+  fromDirect: boolean | null;
+  toDirect: boolean | null;
 }
 
 export interface DiffReport {

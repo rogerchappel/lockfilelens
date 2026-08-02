@@ -42,7 +42,7 @@ export function renderDiff(report: DiffReport, format: 'json' | 'markdown' | 'te
       `risk: ${report.risk}`,
       `changes: ${report.summary.total} (+${report.summary.added} -${report.summary.removed} ↑${report.summary.upgraded} ↓${report.summary.downgraded})`
     ];
-    for (const change of report.changes) lines.push(`- ${change.name}: ${change.from ?? '∅'} -> ${change.to ?? '∅'} (${change.type}${change.direct ? ', direct' : ', transitive'})`);
+    for (const change of report.changes) lines.push(`- ${change.name}: ${change.from ?? '∅'} -> ${change.to ?? '∅'} (${change.type}, ${scopeLabel(change.fromDirect, change.toDirect)})`);
     for (const warning of report.warnings) lines.push(`warning: ${warning}`);
     return `${lines.join('\n')}\n`;
   }
@@ -67,7 +67,7 @@ export function renderDiff(report: DiffReport, format: 'json' | 'markdown' | 'te
   if (report.changes.length === 0) lines.push('_No dependency resolution changes found._');
   else {
     lines.push('| Package | From | To | Type | Scope |', '|---|---|---|---|---|');
-    for (const change of report.changes) lines.push(`| ${escapePipes(change.name)} | ${change.from ?? '—'} | ${change.to ?? '—'} | ${change.type} | ${change.direct ? 'direct' : 'transitive'} |`);
+    for (const change of report.changes) lines.push(`| ${escapePipes(change.name)} | ${change.from ?? '—'} | ${change.to ?? '—'} | ${change.type} | ${scopeLabel(change.fromDirect, change.toDirect)} |`);
   }
   if (report.warnings.length > 0) {
     lines.push('', '## Warnings', '');
@@ -83,4 +83,12 @@ function riskLabel(risk: string): string {
 
 function escapePipes(value: string): string {
   return value.replace(/\|/g, '\\|');
+}
+
+function scopeLabel(from: boolean | null, to: boolean | null): string {
+  const before = from === null ? null : from ? 'direct' : 'transitive';
+  const after = to === null ? null : to ? 'direct' : 'transitive';
+  if (before === null) return after!;
+  if (after === null) return before;
+  return before === after ? before : `${before} -> ${after}`;
 }
