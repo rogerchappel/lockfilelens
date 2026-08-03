@@ -1,10 +1,11 @@
-import { existsSync, statSync } from 'node:fs';
+import { accessSync, constants, existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { findLockfiles, isLockfilePath, loadManifest, managerForPath, parseLockfile } from './lockfiles.js';
 import type { DependencyChange, DiffReport, LockfileInfo, PackageManager, ProjectInspection } from './types.js';
 
 export function inspectProject(inputPath: string): ProjectInspection {
   const path = resolve(inputPath);
+  validateInspectInput(path);
   const projectPath = isLockfilePath(path) ? resolve(path, '..') : path;
   const manifest = loadManifest(projectPath);
   const lockfilePaths = isLockfilePath(path) ? [path] : findLockfiles(projectPath);
@@ -20,6 +21,8 @@ export function inspectProject(inputPath: string): ProjectInspection {
 }
 
 export function diffLockfiles(basePath: string, headPath: string): DiffReport {
+  validateLockfileInput(basePath, 'base');
+  validateLockfileInput(headPath, 'head');
   const baseManifest = loadManifest(basePath);
   const headManifest = loadManifest(headPath);
   const base = parseLockfile(resolve(basePath), baseManifest);
@@ -53,6 +56,31 @@ export function diffLockfiles(basePath: string, headPath: string): DiffReport {
     changes,
     warnings
   };
+}
+
+function validateInspectInput(path: string): void {
+  if (!existsSync(path)) throw new Error(`inspect input does not exist: ${path}`);
+  const stats = statSync(path);
+  if (stats.isDirectory()) return;
+  if (!stats.isFile()) throw new Error(`inspect input must be a directory or recognized lockfile: ${path}`);
+  if (!isLockfilePath(path)) throw new Error(`inspect input is not a recognized lockfile: ${path}`);
+  ensureReadable(path, 'inspect input');
+}
+
+function validateLockfileInput(inputPath: string, label: 'base' | 'head'): void {
+  const path = resolve(inputPath);
+  if (!existsSync(path)) throw new Error(`diff ${label} lockfile does not exist: ${path}`);
+  if (!statSync(path).isFile()) throw new Error(`diff ${label} lockfile is not a file: ${path}`);
+  if (!isLockfilePath(path)) throw new Error(`diff ${label} input is not a recognized lockfile: ${path}`);
+  ensureReadable(path, `diff ${label} lockfile`);
+}
+
+function ensureReadable(path: string, label: string): void {
+  try {
+    accessSync(path, constants.R_OK);
+  } catch {
+    throw new Error(`${label} is not readable: ${path}`);
+  }
 }
 
 type Resolution = { version: string; direct: boolean };
