@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { diffLockfiles, inspectProject, parseLockfile, renderDiff } from '../dist/index.js';
 
@@ -69,6 +72,40 @@ test('inspect reports duplicate ecosystem signals and package-manager drift', ()
   assert.equal(report.risk, 'medium');
   assert.ok(report.duplicateEcosystemSignals[0].includes('multiple package-manager signals'));
   assert.ok(report.drift.some((line) => line.includes('packageManager declares pnpm')));
+});
+
+test('engine rejects invalid inspect and diff inputs', () => {
+  const missing = join(tmpdir(), `lockfilelens-missing-${process.pid}`);
+  assert.throws(() => inspectProject(missing), /inspect input does not exist/);
+  assert.throws(() => diffLockfiles(missing, fixture('npm-b/package-lock.json')), /diff base lockfile does not exist/);
+  assert.throws(() => diffLockfiles(fixture('npm-a'), fixture('npm-b/package-lock.json')), /diff base lockfile is not a file/);
+
+  const unsupported = join(mkdtempSync(join(tmpdir(), 'lockfilelens-test-')), 'custom.lock');
+  writeFileSync(unsupported, 'not a supported lockfile');
+  assert.throws(() => inspectProject(unsupported), /inspect input is not a recognized lockfile/);
+  assert.throws(() => diffLockfiles(fixture('npm-a/package-lock.json'), unsupported), /diff head input is not a recognized lockfile/);
+
+  const unreadable = join(mkdtempSync(join(tmpdir(), 'lockfilelens-test-')), 'yarn.lock');
+  writeFileSync(unreadable, '');
+  chmodSync(unreadable, 0o000);
+  try {
+    assert.throws(() => diffLockfiles(unreadable, fixture('yarn-b/yarn.lock')), /diff base lockfile is not readable/);
+  } finally {
+    chmodSync(unreadable, 0o600);
+  }
+});
+
+test('CLI reports invalid inputs on stderr with a nonzero exit', () => {
+  const missing = join(tmpdir(), `lockfilelens-cli-missing-${process.pid}`);
+  const inspect = spawnSync(process.execPath, [cli, 'inspect', missing], { encoding: 'utf8' });
+  assert.equal(inspect.status, 1);
+  assert.equal(inspect.stdout, '');
+  assert.match(inspect.stderr, /lockfilelens: inspect input does not exist:/);
+
+  const diff = spawnSync(process.execPath, [cli, 'diff', '--base', fixture('npm-a'), '--head', fixture('npm-b/package-lock.json')], { encoding: 'utf8' });
+  assert.equal(diff.status, 1);
+  assert.equal(diff.stdout, '');
+  assert.match(diff.stderr, /lockfilelens: diff base lockfile is not a file:/);
 });
 
 test('renders stable markdown reviewer checklist', () => {

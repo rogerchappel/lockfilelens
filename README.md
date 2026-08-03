@@ -71,6 +71,10 @@ lockfilelens summary [project-or-lockfile] [--format markdown|json|text]
 
 Reports project-level dependency hygiene:
 
+The optional input must exist and be either a directory or a recognized lockfile.
+Invalid, unreadable, or unsupported file inputs print an error to stderr and exit
+nonzero instead of producing an empty inspection.
+
 - recognized lockfiles: `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`
 - package-manager drift between `packageManager`, scripts, and lockfiles
 - missing lockfiles when `package.json` declares dependencies
@@ -80,6 +84,10 @@ Reports project-level dependency hygiene:
 ### `diff`
 
 Compares two lockfiles of the same ecosystem and classifies changes as:
+
+Both inputs must be readable files with one of the recognized lockfile names
+listed above. Missing paths, directories, unreadable files, and unsupported
+filenames print an error to stderr and exit nonzero.
 
 - added
 - removed
