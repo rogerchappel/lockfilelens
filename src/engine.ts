@@ -205,6 +205,54 @@ function riskForChanges(changes: DependencyChange[], warnings: string[]): 'low' 
 }
 
 function compareVersions(a: string, b: string): number {
+  const leftSemver = parseSemver(a);
+  const rightSemver = parseSemver(b);
+  if (leftSemver && rightSemver) return compareSemver(leftSemver, rightSemver);
+
+  return compareVersionTokens(a, b);
+}
+
+type Semver = {
+  major: number;
+  minor: number;
+  patch: number;
+  prerelease: string[];
+};
+
+function parseSemver(version: string): Semver | null {
+  const match = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(version);
+  if (!match) return null;
+  return {
+    major: Number(match[1]),
+    minor: Number(match[2]),
+    patch: Number(match[3]),
+    prerelease: match[4]?.split('.') ?? []
+  };
+}
+
+function compareSemver(a: Semver, b: Semver): number {
+  for (const key of ['major', 'minor', 'patch'] as const) {
+    if (a[key] !== b[key]) return a[key] - b[key];
+  }
+  if (a.prerelease.length === 0) return b.prerelease.length === 0 ? 0 : 1;
+  if (b.prerelease.length === 0) return -1;
+  const length = Math.max(a.prerelease.length, b.prerelease.length);
+  for (let index = 0; index < length; index += 1) {
+    const left = a.prerelease[index];
+    const right = b.prerelease[index];
+    if (left === undefined) return -1;
+    if (right === undefined) return 1;
+    if (left === right) continue;
+    const leftNumeric = /^\d+$/.test(left);
+    const rightNumeric = /^\d+$/.test(right);
+    if (leftNumeric && rightNumeric) return Number(left) - Number(right);
+    if (leftNumeric !== rightNumeric) return leftNumeric ? -1 : 1;
+    return left < right ? -1 : 1;
+  }
+  return 0;
+}
+
+function compareVersionTokens(a: string, b: string): number {
   const left = a.split(/[^0-9A-Za-z]+/).filter(Boolean);
   const right = b.split(/[^0-9A-Za-z]+/).filter(Boolean);
   const len = Math.max(left.length, right.length);
