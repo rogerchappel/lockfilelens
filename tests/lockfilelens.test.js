@@ -9,6 +9,20 @@ import { diffLockfiles, inspectProject, parseLockfile, renderDiff } from '../dis
 const cli = new URL('../dist/cli.js', import.meta.url).pathname;
 const fixture = (path) => new URL(`fixtures/${path}`, import.meta.url).pathname;
 
+function temporaryNpmLock(version) {
+  const directory = mkdtempSync(join(tmpdir(), 'lockfilelens-version-'));
+  const path = join(directory, 'package-lock.json');
+  writeFileSync(path, JSON.stringify({
+    name: 'version-test',
+    lockfileVersion: 3,
+    packages: {
+      '': { dependencies: { demo: version } },
+      'node_modules/demo': { version }
+    }
+  }));
+  return path;
+}
+
 test('parses npm package-lock and marks manifest dependencies direct', () => {
   const lock = parseLockfile(fixture('npm-b/package-lock.json'));
   assert.equal(lock.manager, 'npm');
@@ -23,6 +37,53 @@ test('diff classifies added and upgraded direct dependencies', () => {
   assert.equal(report.summary.upgraded, 1);
   assert.equal(report.changes.find((change) => change.name === 'left-pad')?.type, 'upgraded');
   assert.equal(report.changes.find((change) => change.name === 'is-number')?.direct, true);
+});
+
+test('diff follows SemVer precedence for releases and prereleases', () => {
+  const cases = [
+    ['2.0.0-beta.1', '2.0.0', 'upgraded'],
+    ['2.0.0', '2.0.0-beta.1', 'downgraded'],
+    ['2.0.0-beta.2', '2.0.0-beta.11', 'upgraded'],
+    ['2.0.0-beta.11', '2.0.0-beta.alpha', 'upgraded'],
+    ['2.0.0-beta.alpha', '2.0.0-beta.beta', 'upgraded']
+  ];
+
+  for (const [from, to, type] of cases) {
+    const report = diffLockfiles(temporaryNpmLock(from), temporaryNpmLock(to));
+    assert.equal(report.changes[0]?.type, type, `${from} -> ${to}`);
+  }
+});
+
+test('build metadata does not affect SemVer precedence or downgrade risk', () => {
+  const report = diffLockfiles(temporaryNpmLock('2.0.0+build.1'), temporaryNpmLock('2.0.0+build.2'));
+
+  assert.equal(report.changes[0]?.type, 'changed');
+  assert.equal(report.summary.upgraded, 0);
+  assert.equal(report.summary.downgraded, 0);
+  assert.equal(report.summary.changed, 1);
+  assert.equal(report.risk, 'low');
+
+  const json = JSON.parse(renderDiff(report, 'json'));
+  assert.equal(json.changes[0].type, 'changed');
+  assert.match(renderDiff(report, 'markdown'), /\| demo \| 2\.0\.0\+build\.1 \| 2\.0\.0\+build\.2 \| changed \| transitive \|/);
+  assert.match(renderDiff(report, 'text'), /demo: 2\.0\.0\+build\.1 -> 2\.0\.0\+build\.2 \(changed, transitive\)/);
+});
+
+test('SemVer downgrade is reflected in summaries and risk across formats', () => {
+  const report = diffLockfiles(temporaryNpmLock('2.0.0'), temporaryNpmLock('2.0.0-beta.1'));
+
+  assert.equal(report.summary.downgraded, 1);
+  assert.equal(report.risk, 'high');
+  assert.deepEqual(JSON.parse(renderDiff(report, 'json')).summary, report.summary);
+  assert.match(renderDiff(report, 'markdown'), /\| 0 \| 0 \| 0 \| 1 \| 0 \|/);
+  assert.match(renderDiff(report, 'markdown'), /\*\*Risk:\*\* High/);
+  assert.match(renderDiff(report, 'text'), /risk: high/);
+  assert.match(renderDiff(report, 'text'), /changes: 1 \(\+0 -0 ↑0 ↓1\)/);
+});
+
+test('non-SemVer versions retain deterministic fallback ordering', () => {
+  const report = diffLockfiles(temporaryNpmLock('release-2'), temporaryNpmLock('release-10'));
+  assert.equal(report.changes[0]?.type, 'upgraded');
 });
 
 test('diff compares every resolved version and directness deterministically', () => {
