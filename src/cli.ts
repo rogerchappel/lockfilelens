@@ -31,8 +31,9 @@ function main(argv: string[]): number {
   }
   if (command === 'diff') {
     const { args, format, base, head } = parseCommon(rest);
+    rejectSurplusDiffOperands('diff', args, base, head);
     const resolvedBase = base ?? args[0];
-    const resolvedHead = head ?? args[1];
+    const resolvedHead = head ?? args[base ? 0 : 1];
     if (!resolvedBase || !resolvedHead) throw userError('diff requires --base and --head lockfile paths');
     process.stdout.write(renderDiff(diffLockfiles(resolvedBase, resolvedHead), format));
     return 0;
@@ -40,8 +41,9 @@ function main(argv: string[]): number {
   if (command === 'summary') {
     const { args, format, base, head } = parseCommon(rest);
     if (base || head || args.length >= 2) {
+      rejectSurplusDiffOperands('summary diff mode', args, base, head);
       const resolvedBase = base ?? args[0];
-      const resolvedHead = head ?? args[1];
+      const resolvedHead = head ?? args[base ? 0 : 1];
       if (!resolvedBase || !resolvedHead) throw userError('summary diff mode requires base and head paths');
       process.stdout.write(renderDiff(diffLockfiles(resolvedBase, resolvedHead), format));
     } else {
@@ -50,6 +52,11 @@ function main(argv: string[]): number {
     return 0;
   }
   throw userError(`unknown command: ${command}`);
+}
+
+function rejectSurplusDiffOperands(command: string, args: string[], base?: string, head?: string): void {
+  const availableSlots = Number(!base) + Number(!head);
+  if (args.length > availableSlots) throw userError(`${command} accepts at most two lockfile paths`);
 }
 
 function parseCommon(tokens: string[]): { args: string[]; format: Format; base?: string; head?: string } {
@@ -108,7 +115,7 @@ function userError(message: string): CliError {
 }
 
 function helpText(): string {
-  return `lockfilelens ${VERSION}\n\nLocal-first lockfile drift and dependency change explainer.\n\nUsage:\n  lockfilelens inspect [project-or-lockfile] [--format markdown|json|text]\n  lockfilelens diff --base <lockfile> --head <lockfile> [--format markdown|json|text]\n  lockfilelens summary [project-or-lockfile] [--format markdown|json|text]\n\nExamples:\n  lockfilelens inspect . --json\n  lockfilelens diff --base fixtures/a/package-lock.json --head fixtures/b/package-lock.json\n\nSafety:\n  Core commands are read-only and never make network calls.\n`;
+  return `lockfilelens ${VERSION}\n\nLocal-first lockfile drift and dependency change explainer.\n\nUsage:\n  lockfilelens inspect [project-or-lockfile] [--format markdown|json|text]\n  lockfilelens diff <base-lockfile> <head-lockfile> [--format markdown|json|text]\n  lockfilelens diff --base <lockfile> --head <lockfile> [--format markdown|json|text]\n  lockfilelens summary [project-or-lockfile] [--format markdown|json|text]\n  lockfilelens summary <base-lockfile> <head-lockfile> [--format markdown|json|text]\n  lockfilelens summary --base <lockfile> --head <lockfile> [--format markdown|json|text]\n\nExamples:\n  lockfilelens inspect . --json\n  lockfilelens diff --base fixtures/a/package-lock.json --head fixtures/b/package-lock.json\n\nSafety:\n  Core commands are read-only and never make network calls.\n`;
 }
 
 function readPackageVersion(): string {

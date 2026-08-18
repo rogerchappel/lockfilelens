@@ -169,6 +169,37 @@ test('CLI reports invalid inputs on stderr with a nonzero exit', () => {
   assert.match(diff.stderr, /lockfilelens: diff base lockfile is not a file:/);
 });
 
+test('CLI accepts positional and flag diff operands', () => {
+  const base = fixture('npm-a/package-lock.json');
+  const head = fixture('npm-b/package-lock.json');
+  for (const args of [
+    ['diff', base, head],
+    ['diff', '--base', base, '--head', head],
+    ['summary', base, head],
+    ['summary', '--base', base, '--head', head],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, ...args, '--format', 'json'], { encoding: 'utf8' });
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(JSON.parse(result.stdout).summary.total, 2);
+  }
+});
+
+test('CLI rejects surplus diff operands on stderr with exit code 2', () => {
+  const base = fixture('npm-a/package-lock.json');
+  const head = fixture('npm-b/package-lock.json');
+  for (const args of [
+    ['diff', base, head, 'extra'],
+    ['diff', '--base', base, '--head', head, 'extra'],
+    ['summary', base, head, 'extra'],
+    ['summary', '--base', base, '--head', head, 'extra'],
+  ]) {
+    const result = spawnSync(process.execPath, [cli, ...args], { encoding: 'utf8' });
+    assert.equal(result.status, 2);
+    assert.equal(result.stdout, '');
+    assert.match(result.stderr, /^lockfilelens: (?:diff|summary diff mode) accepts at most two lockfile paths\n$/);
+  }
+});
+
 test('renders stable markdown reviewer checklist', () => {
   const report = diffLockfiles(fixture('npm-a/package-lock.json'), fixture('npm-b/package-lock.json'));
   const markdown = renderDiff(report, 'markdown');
