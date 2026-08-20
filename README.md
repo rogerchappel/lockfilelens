@@ -76,6 +76,7 @@ Invalid, unreadable, or unsupported file inputs print an error to stderr and exi
 nonzero instead of producing an empty inspection.
 
 - recognized lockfiles: `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`
+- pnpm lockfiles support modern `name@version` keys (including peer-qualified keys) and legacy pnpm 5 slash-form `/name/version` and `/@scope/name/version` keys
 - package-manager drift between `packageManager`, scripts, and lockfiles
 - missing lockfiles when `package.json` declares dependencies
 - lockfiles older than `package.json`
