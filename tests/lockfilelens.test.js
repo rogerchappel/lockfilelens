@@ -128,6 +128,27 @@ test('parses pnpm, yarn, and bun fixtures', () => {
   assert.equal(bun.packages.find((pkg) => pkg.name === 'zod')?.direct, true);
 });
 
+test('parses and diffs legacy pnpm slash-form package keys', () => {
+  const basePath = fixture('pnpm-legacy-a/pnpm-lock.yaml');
+  const headPath = fixture('pnpm-legacy-b/pnpm-lock.yaml');
+  const lock = parseLockfile(basePath);
+
+  assert.equal(lock.packageCount, 2);
+  assert.equal(lock.directCount, 2);
+  assert.deepEqual(lock.packages.map(({ name, version }) => [name, version]), [
+    ['@scope/demo', '2.0.0'],
+    ['left-pad', '1.3.0']
+  ]);
+
+  const inspection = inspectProject(new URL('fixtures/pnpm-legacy-a', import.meta.url).pathname);
+  assert.equal(inspection.staleOrMissingLockfiles.some((item) => item.includes('no parsed packages')), false);
+
+  const diff = diffLockfiles(basePath, headPath);
+  assert.equal(diff.summary.upgraded, 1);
+  assert.equal(diff.summary.added, 1);
+  assert.equal(diff.changes.find((change) => change.name === 'left-pad')?.to, '1.3.1');
+});
+
 test('inspect reports duplicate ecosystem signals and package-manager drift', () => {
   const report = inspectProject(fixture('drift'));
   assert.equal(report.risk, 'medium');
