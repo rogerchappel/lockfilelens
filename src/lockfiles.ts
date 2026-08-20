@@ -141,6 +141,12 @@ function parsePnpmLock(content: string, source: string, manifest: ManifestInfo |
 
 function parsePnpmPackageKey(key: string): { name: string; version: string } | null {
   const clean = key.replace(/^\//, '').split('(')[0];
+  const slash = clean.startsWith('@') ? clean.indexOf('/', clean.indexOf('/') + 1) : clean.indexOf('/');
+  if (slash > 0) {
+    const name = clean.slice(0, slash);
+    const version = clean.slice(slash + 1);
+    return name && version ? { name, version } : null;
+  }
   const at = clean.startsWith('@') ? clean.indexOf('@', 1) : clean.lastIndexOf('@');
   if (at <= 0) return null;
   return { name: clean.slice(0, at), version: clean.slice(at + 1) };
