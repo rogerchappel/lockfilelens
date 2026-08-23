@@ -149,6 +149,30 @@ test('parses and diffs legacy pnpm slash-form package keys', () => {
   assert.equal(diff.changes.find((change) => change.name === 'left-pad')?.to, '1.3.1');
 });
 
+test('parses pnpm v9 package identities without snapshot version leakage', () => {
+  const basePath = fixture('pnpm-v9-a/pnpm-lock.yaml');
+  const headPath = fixture('pnpm-v9-b/pnpm-lock.yaml');
+  const lock = parseLockfile(basePath);
+
+  assert.equal(lock.packageCount, 2);
+  assert.equal(lock.directCount, 1);
+  assert.deepEqual(lock.packages.map(({ name, version, direct }) => [name, version, direct]), [
+    ['bar', '2.0.0', false],
+    ['foo', '1.0.0', true]
+  ]);
+
+  const inspection = inspectProject(new URL('fixtures/pnpm-v9-a', import.meta.url).pathname);
+  assert.equal(inspection.risk, 'low');
+  assert.equal(inspection.drift.some((item) => item.includes('multiple resolved versions')), false);
+
+  const diff = diffLockfiles(basePath, headPath);
+  assert.equal(diff.summary.total, 1);
+  assert.equal(diff.summary.upgraded, 1);
+  assert.equal(diff.changes[0]?.name, 'foo');
+  assert.equal(diff.changes[0]?.from, '1.0.0');
+  assert.equal(diff.changes[0]?.to, '1.1.0');
+});
+
 test('inspect reports duplicate ecosystem signals and package-manager drift', () => {
   const report = inspectProject(fixture('drift'));
   assert.equal(report.risk, 'medium');
