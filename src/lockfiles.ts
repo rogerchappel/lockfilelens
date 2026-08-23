@@ -120,20 +120,19 @@ function parsePnpmLock(content: string, source: string, manifest: ManifestInfo |
   const direct = new Set(manifest?.dependencyNames ?? []);
   const packages: PackageInfo[] = [];
   const packageLine = /^\s{2}(?:'|")?(\/|@?[^\s'":][^'":]*@)([^'":]+)(?:'|")?:\s*$/;
-  const versionLine = /^\s{4,}version:\s*['"]?([^'"\s]+)['"]?\s*$/;
-  let currentName: string | null = null;
+  let section: string | null = null;
   for (const line of content.split(/\r?\n/)) {
+    const sectionMatch = line.match(/^([^\s][^:]*):\s*$/);
+    if (sectionMatch) {
+      section = sectionMatch[1];
+      continue;
+    }
+    if (section !== 'packages') continue;
     const match = line.match(packageLine);
     if (match && line.startsWith('  ') && !line.startsWith('    ')) {
       const key = line.trim().replace(/^['"]|['"]:?$/g, '').replace(/:$/, '');
       const parsed = parsePnpmPackageKey(key);
-      currentName = parsed?.name ?? null;
       if (parsed) packages.push({ name: parsed.name, version: parsed.version, direct: direct.has(parsed.name), source });
-      continue;
-    }
-    const version = line.match(versionLine)?.[1];
-    if (currentName && version && !packages.some((pkg) => pkg.name === currentName && pkg.version === version)) {
-      packages.push({ name: currentName, version, direct: direct.has(currentName), source });
     }
   }
   return packages;
