@@ -84,11 +84,13 @@ nonzero instead of producing an empty inspection.
 
 ### `diff`
 
-Compares two lockfiles of the same ecosystem and classifies changes as:
+Compares two lockfiles from the same package manager and classifies changes as:
 
 Both inputs must be readable files with one of the recognized lockfile names
-listed above. Missing paths, directories, unreadable files, and unsupported
-filenames print an error to stderr and exit nonzero.
+listed above. Mixed-manager comparisons (for example, npm to pnpm) are rejected
+because their resolutions do not form a valid before/after diff. Missing paths,
+directories, unreadable files, and unsupported filenames print an error to
+stderr and exit nonzero.
 
 - added
 - removed
