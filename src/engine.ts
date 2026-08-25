@@ -27,8 +27,10 @@ export function diffLockfiles(basePath: string, headPath: string): DiffReport {
   const headManifest = loadManifest(headPath);
   const base = parseLockfile(resolve(basePath), baseManifest);
   const head = parseLockfile(resolve(headPath), headManifest);
+  if (base.manager !== head.manager) {
+    throw new Error(`diff lockfile managers must match: ${base.manager} (base) and ${head.manager} (head)`);
+  }
   const warnings = [...base.warnings, ...head.warnings];
-  if (base.manager !== head.manager) warnings.push(`comparing different lockfile managers: ${base.manager} -> ${head.manager}`);
 
   const basePackages = resolutionsByName(base);
   const headPackages = resolutionsByName(head);
@@ -50,7 +52,7 @@ export function diffLockfiles(basePath: string, headPath: string): DiffReport {
   return {
     base: resolve(basePath),
     head: resolve(headPath),
-    manager: base.manager === head.manager ? base.manager : 'unknown',
+    manager: base.manager,
     summary,
     risk: riskForChanges(changes, warnings),
     changes,
