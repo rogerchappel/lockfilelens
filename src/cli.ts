@@ -17,6 +17,7 @@ function main(argv: string[]): number {
   const [command, ...rest] = argv;
   if (!command || command === '--help' || command === '-h') {
     process.stdout.write(helpText());
+    process.stdout.write('Diff inputs must use the same package manager.\n');
     return 0;
   }
   if (command === '--version' || command === '-v') {
