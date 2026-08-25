@@ -185,6 +185,10 @@ test('engine rejects invalid inspect and diff inputs', () => {
   assert.throws(() => inspectProject(missing), /inspect input does not exist/);
   assert.throws(() => diffLockfiles(missing, fixture('npm-b/package-lock.json')), /diff base lockfile does not exist/);
   assert.throws(() => diffLockfiles(fixture('npm-a'), fixture('npm-b/package-lock.json')), /diff base lockfile is not a file/);
+  assert.throws(
+    () => diffLockfiles(fixture('npm-a/package-lock.json'), fixture('pnpm-a/pnpm-lock.yaml')),
+    /diff lockfile managers must match: npm \(base\) and pnpm \(head\)/
+  );
 
   const unsupported = join(mkdtempSync(join(tmpdir(), 'lockfilelens-test-')), 'custom.lock');
   writeFileSync(unsupported, 'not a supported lockfile');
@@ -212,6 +216,11 @@ test('CLI reports invalid inputs on stderr with a nonzero exit', () => {
   assert.equal(diff.status, 1);
   assert.equal(diff.stdout, '');
   assert.match(diff.stderr, /lockfilelens: diff base lockfile is not a file:/);
+
+  const mixedManagers = spawnSync(process.execPath, [cli, 'diff', fixture('npm-a/package-lock.json'), fixture('pnpm-a/pnpm-lock.yaml'), '--format', 'json'], { encoding: 'utf8' });
+  assert.equal(mixedManagers.status, 1);
+  assert.equal(mixedManagers.stdout, '');
+  assert.equal(mixedManagers.stderr, 'lockfilelens: diff lockfile managers must match: npm (base) and pnpm (head)\n');
 });
 
 test('CLI accepts positional and flag diff operands', () => {
