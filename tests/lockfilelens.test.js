@@ -128,6 +128,49 @@ test('parses pnpm, yarn, and bun fixtures', () => {
   assert.equal(bun.packages.find((pkg) => pkg.name === 'zod')?.direct, true);
 });
 
+test('parses and diffs modern Yarn Berry lockfiles', () => {
+  const basePath = fixture('yarn-berry-a/yarn.lock');
+  const headPath = fixture('yarn-berry-b/yarn.lock');
+  const lock = parseLockfile(basePath);
+
+  assert.equal(lock.packageCount, 3);
+  assert.equal(lock.directCount, 2);
+  assert.deepEqual(lock.packages.map(({ name, version, direct }) => [name, version, direct]), [
+    ['@scope/demo', '1.0.0', true],
+    ['left-pad', '1.3.0', false],
+    ['lodash', '4.17.20', true]
+  ]);
+
+  const inspection = inspectProject(new URL('fixtures/yarn-berry-a', import.meta.url).pathname);
+  assert.equal(inspection.staleOrMissingLockfiles.some((item) => item.includes('no parsed packages')), false);
+  assert.deepEqual(inspection.warnings, []);
+
+  const diff = diffLockfiles(basePath, headPath);
+  assert.equal(diff.summary.upgraded, 1);
+  assert.deepEqual(diff.changes, [
+    { name: 'lodash', from: '4.17.20', to: '4.17.21', type: 'upgraded', direct: true, fromDirect: true, toDirect: true }
+  ]);
+});
+
+test('CLI inspect and diff report modern Yarn dependencies deterministically', () => {
+  const inspection = JSON.parse(execFileSync(process.execPath, [cli, 'inspect', fixture('yarn-berry-a'), '--format', 'json'], { encoding: 'utf8' }));
+  assert.equal(inspection.lockfiles[0].packageCount, 3);
+  assert.equal(inspection.lockfiles[0].directCount, 2);
+
+  const diff = JSON.parse(execFileSync(process.execPath, [cli, 'diff', '--base', fixture('yarn-berry-a/yarn.lock'), '--head', fixture('yarn-berry-b/yarn.lock'), '--format', 'json'], { encoding: 'utf8' }));
+  assert.deepEqual(diff.changes.map(({ name, from, to }) => [name, from, to]), [['lodash', '4.17.20', '4.17.21']]);
+});
+
+test('warns when a modern Yarn lockfile contains no versioned package entries', () => {
+  const lock = parseLockfile(fixture('yarn-berry-malformed/yarn.lock'));
+  assert.equal(lock.packageCount, 0);
+  assert.deepEqual(lock.warnings, ['failed to parse yarn.lock: modern Yarn lockfile has no package entries with versions']);
+
+  const inspection = inspectProject(new URL('fixtures/yarn-berry-malformed', import.meta.url).pathname);
+  assert.equal(inspection.staleOrMissingLockfiles.some((item) => item.includes('no parsed packages')), true);
+  assert.deepEqual(inspection.warnings, lock.warnings);
+});
+
 test('parses and diffs legacy pnpm slash-form package keys', () => {
   const basePath = fixture('pnpm-legacy-a/pnpm-lock.yaml');
   const headPath = fixture('pnpm-legacy-b/pnpm-lock.yaml');
