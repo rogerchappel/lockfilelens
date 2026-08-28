@@ -77,6 +77,7 @@ nonzero instead of producing an empty inspection.
 
 - recognized lockfiles: `package-lock.json`, `npm-shrinkwrap.json`, `pnpm-lock.yaml`, `yarn.lock`, `bun.lock`, `bun.lockb`
 - pnpm lockfiles support modern `name@version` keys (including peer-qualified keys) and legacy pnpm 5 slash-form `/name/version` and `/@scope/name/version` keys
+- Yarn lockfiles support classic Yarn v1 selectors with space-delimited versions and modern Yarn Berry/v2-v4 `npm:` selectors with colon-delimited versions, including scoped and multi-selector entries; malformed modern entries without versions produce a parser warning
 - package-manager drift between `packageManager`, scripts, and lockfiles
 - missing lockfiles when `package.json` declares dependencies
 - lockfiles older than `package.json`
