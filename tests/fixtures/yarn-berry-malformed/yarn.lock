@@ -1,0 +1,6 @@
+__metadata:
+  version: 8
+  cacheKey: 10c0
+
+"lodash@npm:^4.17.21":
+  resolution: "lodash@npm:4.17.21"
