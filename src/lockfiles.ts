@@ -72,7 +72,12 @@ export function parseLockfile(path: string, manifest = loadManifest(path)): Lock
   try {
     if (manager === 'npm') packages = parseNpmLock(content, path, manifest);
     if (manager === 'pnpm') packages = parsePnpmLock(content, path, manifest);
-    if (manager === 'yarn') packages = parseYarnLock(content, path, manifest);
+    if (manager === 'yarn') {
+      packages = parseYarnLock(content, path, manifest);
+      if (packages.length === 0 && isModernYarnLock(content)) {
+        warnings.push('failed to parse yarn.lock: modern Yarn lockfile has no package entries with versions');
+      }
+    }
     if (manager === 'bun' && basename(path) === 'bun.lock') packages = parseBunLock(content, path, manifest);
   } catch (error) {
     warnings.push(`failed to parse ${basename(path)}: ${error instanceof Error ? error.message : String(error)}`);
@@ -160,12 +165,16 @@ function parseYarnLock(content: string, source: string, manifest: ManifestInfo |
       currentNames = line.slice(0, -1).split(/,\s*/).map(packageNameFromYarnSelector).filter(Boolean) as string[];
       continue;
     }
-    const version = line.match(/^\s{2}version\s+"?([^"\s]+)"?/)?.[1];
+    const version = line.match(/^\s{2}version(?:\s+|:\s*)"?([^"\s]+)"?\s*$/)?.[1];
     if (version) {
       for (const name of currentNames) packages.push({ name, version, direct: direct.has(name), source });
     }
   }
   return packages;
+}
+
+function isModernYarnLock(content: string): boolean {
+  return /^__metadata:\s*$/m.test(content) || /^\s{2}version:\s*/m.test(content);
 }
 
 function packageNameFromYarnSelector(selector: string): string | null {
