@@ -1,5 +1,5 @@
 import { accessSync, constants, existsSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { findLockfiles, isLockfilePath, loadManifest, managerForPath, parseLockfile } from './lockfiles.js';
 import type { DependencyChange, DiffReport, LockfileInfo, PackageManager, ProjectInspection } from './types.js';
 
@@ -13,7 +13,7 @@ export function inspectProject(inputPath: string): ProjectInspection {
   const detectedManagers = [...new Set(lockfiles.map((lockfile) => lockfile.manager))];
   const packageManagerName = manifest?.packageManager?.split('@')[0] as PackageManager | undefined;
   const duplicateEcosystemSignals = collectDuplicateSignals(lockfiles, manifest?.scriptsPackageManagerSignals ?? [], packageManagerName);
-  const staleOrMissingLockfiles = collectLockfileState(projectPath, lockfiles, manifest?.dependencyNames.length ?? 0);
+  const staleOrMissingLockfiles = collectLockfileState(lockfiles, manifest?.dependencyNames ?? []);
   const drift = collectDrift(lockfiles, packageManagerName);
   const warnings = lockfiles.flatMap((lockfile) => lockfile.warnings);
   const risk = staleOrMissingLockfiles.length > 0 || duplicateEcosystemSignals.length > 0 || drift.length > 0 ? 'medium' : 'low';
@@ -160,19 +160,15 @@ function collectDuplicateSignals(lockfiles: LockfileInfo[], scriptSignals: strin
   return managers.size > 1 ? [`multiple package-manager signals detected: ${[...managers].sort().join(', ')}`] : [];
 }
 
-function collectLockfileState(projectPath: string, lockfiles: LockfileInfo[], manifestDependencyCount: number): string[] {
+function collectLockfileState(lockfiles: LockfileInfo[], manifestDependencyNames: string[]): string[] {
   const issues: string[] = [];
-  if (manifestDependencyCount > 0 && lockfiles.length === 0) issues.push('package.json declares dependencies but no recognized lockfile exists');
+  if (manifestDependencyNames.length > 0 && lockfiles.length === 0) issues.push('package.json declares dependencies but no recognized lockfile exists');
   for (const lockfile of lockfiles) {
     if (lockfile.packageCount === 0) issues.push(`${lockfile.manager} lockfile has no parsed packages: ${lockfile.path}`);
-  }
-  const manifestPath = join(projectPath, 'package.json');
-  if (existsSync(manifestPath)) {
-    const manifestMtime = statSync(manifestPath).mtimeMs;
-    for (const lockfile of lockfiles) {
-      if (existsSync(lockfile.path) && statSync(lockfile.path).mtimeMs + 1000 < manifestMtime) {
-        issues.push(`${lockfile.manager} lockfile appears older than package.json`);
-      }
+    const represented = new Set(lockfile.packages.map((pkg) => pkg.name));
+    const missing = manifestDependencyNames.filter((name) => !represented.has(name));
+    if (missing.length > 0) {
+      issues.push(`${lockfile.manager} lockfile does not represent direct dependencies: ${missing.join(', ')}`);
     }
   }
   return issues;
