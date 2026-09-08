@@ -128,6 +128,39 @@ test('parses pnpm, yarn, and bun fixtures', () => {
   assert.equal(bun.packages.find((pkg) => pkg.name === 'zod')?.direct, true);
 });
 
+test('parses and diffs current Bun JSONC text lockfiles', () => {
+  const basePath = fixture('bun-current-a/bun.lock');
+  const headPath = fixture('bun-current-b/bun.lock');
+  const lock = parseLockfile(basePath);
+
+  assert.deepEqual(lock.warnings, []);
+  assert.equal(lock.packageCount, 3);
+  assert.equal(lock.directCount, 2);
+  assert.deepEqual(lock.packages.map(({ name, version, direct }) => [name, version, direct]), [
+    ['@scope/direct', '1.0.0', true],
+    ['direct-package', '2.0.0', true],
+    ['transitive-package', '3.0.0', false]
+  ]);
+
+  const inspection = inspectProject(new URL('fixtures/bun-current-a', import.meta.url).pathname);
+  assert.equal(inspection.lockfiles[0].packageCount, 3);
+  assert.equal(inspection.staleOrMissingLockfiles.some((item) => item.includes('no parsed packages')), false);
+
+  const diff = diffLockfiles(basePath, headPath);
+  assert.deepEqual(diff.changes, [
+    { name: '@scope/direct', from: '1.0.0', to: '1.1.0', type: 'upgraded', direct: true, fromDirect: true, toDirect: true }
+  ]);
+});
+
+test('warns when a nonempty Bun text lockfile has no supported package entries', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'lockfilelens-bun-unsupported-'));
+  const path = join(directory, 'bun.lock');
+  writeFileSync(path, '{ "lockfileVersion": 99, "packages": { "future": "shape" } }');
+  const lock = parseLockfile(path);
+  assert.equal(lock.packageCount, 0);
+  assert.deepEqual(lock.warnings, ['failed to parse bun.lock: nonempty Bun lockfile has no supported package entries']);
+});
+
 test('parses and diffs modern Yarn Berry lockfiles', () => {
   const basePath = fixture('yarn-berry-a/yarn.lock');
   const headPath = fixture('yarn-berry-b/yarn.lock');

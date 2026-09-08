@@ -1,0 +1,18 @@
+{
+  // Bun text lockfiles are JSONC, not strict JSON.
+  "lockfileVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "bun-current-fixture",
+      "dependencies": {
+        "@scope/direct": "1.0.0",
+        "direct-package": "2.0.0",
+      },
+    },
+  },
+  "packages": {
+    "@scope/direct": ["@scope/direct@1.0.0", "", {}, "sha512-direct"],
+    "direct-package": ["direct-package@2.0.0", "", {}, "sha512-package"],
+    "transitive-package": ["transitive-package@3.0.0", "", {}, "sha512-transitive"],
+  },
+}
