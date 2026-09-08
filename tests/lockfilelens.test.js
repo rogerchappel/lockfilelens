@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -254,6 +254,38 @@ test('inspect reports duplicate ecosystem signals and package-manager drift', ()
   assert.equal(report.risk, 'medium');
   assert.ok(report.duplicateEcosystemSignals[0].includes('multiple package-manager signals'));
   assert.ok(report.drift.some((line) => line.includes('packageManager declares pnpm')));
+});
+
+test('inspect ignores manifest and lockfile timestamp ordering when dependency state matches', () => {
+  for (const fixtureName of ['npm-a', 'pnpm-v9-a', 'yarn-berry-a', 'bun-current-a']) {
+    const project = mkdtempSync(join(tmpdir(), `lockfilelens-mtime-${fixtureName}-`));
+    cpSync(fixture(fixtureName), project, { recursive: true });
+    const lockfile = inspectProject(project).lockfiles[0].path;
+
+    utimesSync(lockfile, new Date('2026-01-02T00:00:00Z'), new Date('2026-01-02T00:00:00Z'));
+    utimesSync(join(project, 'package.json'), new Date('2026-01-01T00:00:00Z'), new Date('2026-01-01T00:00:00Z'));
+    assert.deepEqual(inspectProject(project).staleOrMissingLockfiles, [], `${fixtureName}: newer lockfile`);
+
+    utimesSync(join(project, 'package.json'), new Date('2026-01-03T00:00:00Z'), new Date('2026-01-03T00:00:00Z'));
+    const inspection = inspectProject(project);
+    assert.deepEqual(inspection.staleOrMissingLockfiles, [], `${fixtureName}: newer manifest`);
+    assert.equal(inspection.risk, 'low');
+  }
+});
+
+test('inspect reports manifest dependencies absent from each supported parsed lockfile', () => {
+  for (const fixtureName of ['npm-a', 'pnpm-v9-a', 'yarn-berry-a', 'bun-current-a']) {
+    const project = mkdtempSync(join(tmpdir(), `lockfilelens-mismatch-${fixtureName}-`));
+    cpSync(fixture(fixtureName), project, { recursive: true });
+    const manifestPath = join(project, 'package.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    manifest.dependencies = { ...(manifest.dependencies ?? {}), 'not-in-lockfile': '1.0.0' };
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+
+    const inspection = inspectProject(project);
+    assert.ok(inspection.staleOrMissingLockfiles.some((issue) => issue.includes('does not represent direct dependencies: not-in-lockfile')), fixtureName);
+    assert.equal(inspection.risk, 'medium');
+  }
 });
 
 test('engine rejects invalid inspect and diff inputs', () => {
