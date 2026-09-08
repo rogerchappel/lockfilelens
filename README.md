@@ -81,7 +81,7 @@ nonzero instead of producing an empty inspection.
 - Bun text `bun.lock` files support current JSONC syntax, including comments, trailing commas, scoped packages, and direct/transitive classification; unsupported nonempty package structures produce a parser warning (`bun.lockb` remains detection-only)
 - package-manager drift between `packageManager`, scripts, and lockfiles
 - missing lockfiles when `package.json` declares dependencies
-- lockfiles older than `package.json`
+- lockfiles whose parsed package state does not represent dependencies declared in `package.json` (timestamps alone are not treated as stale evidence)
 - duplicate resolved package versions inside a lockfile
 
 ### `diff`
