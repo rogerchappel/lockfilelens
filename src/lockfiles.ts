@@ -78,7 +78,12 @@ export function parseLockfile(path: string, manifest = loadManifest(path)): Lock
         warnings.push('failed to parse yarn.lock: modern Yarn lockfile has no package entries with versions');
       }
     }
-    if (manager === 'bun' && basename(path) === 'bun.lock') packages = parseBunLock(content, path, manifest);
+    if (manager === 'bun' && basename(path) === 'bun.lock') {
+      packages = parseBunLock(content, path, manifest);
+      if (content.trim() && packages.length === 0) {
+        warnings.push('failed to parse bun.lock: nonempty Bun lockfile has no supported package entries');
+      }
+    }
   } catch (error) {
     warnings.push(`failed to parse ${basename(path)}: ${error instanceof Error ? error.message : String(error)}`);
   }
@@ -191,12 +196,12 @@ function parseBunLock(content: string, source: string, manifest: ManifestInfo | 
   const direct = new Set(manifest?.dependencyNames ?? []);
   const packages: PackageInfo[] = [];
   try {
-    const lock = JSON.parse(content) as Record<string, unknown>;
+    const lock = JSON.parse(stripJsonCommentsAndTrailingCommas(content)) as Record<string, unknown>;
     const pkg = lock.packages;
     if (pkg && typeof pkg === 'object' && !Array.isArray(pkg)) {
       for (const [name, value] of Object.entries(pkg as Record<string, unknown>)) {
         const tuple = Array.isArray(value) ? value : [];
-        const version = typeof tuple[0] === 'string' ? tuple[0].replace(/^npm:/, '') : null;
+        const version = typeof tuple[0] === 'string' ? bunPackageVersion(name, tuple[0]) : null;
         if (version) packages.push({ name, version, direct: direct.has(name), source });
       }
     }
@@ -207,6 +212,71 @@ function parseBunLock(content: string, source: string, manifest: ManifestInfo | 
     }
   }
   return packages;
+}
+
+function bunPackageVersion(name: string, locator: string): string | null {
+  if (locator.startsWith('npm:')) return locator.slice('npm:'.length) || null;
+  const prefix = `${name}@`;
+  return locator.startsWith(prefix) ? locator.slice(prefix.length) || null : null;
+}
+
+function stripJsonCommentsAndTrailingCommas(content: string): string {
+  let output = '';
+  let inString = false;
+  let escaped = false;
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+    if (inString) {
+      output += char;
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      output += char;
+      continue;
+    }
+    if (char === '/' && next === '/') {
+      while (index < content.length && content[index] !== '\n') index += 1;
+      output += '\n';
+      continue;
+    }
+    if (char === '/' && next === '*') {
+      index += 2;
+      while (index < content.length && !(content[index] === '*' && content[index + 1] === '/')) index += 1;
+      index += 1;
+      continue;
+    }
+    output += char;
+  }
+  let normalized = '';
+  inString = false;
+  escaped = false;
+  for (let index = 0; index < output.length; index += 1) {
+    const char = output[index];
+    if (inString) {
+      normalized += char;
+      if (escaped) escaped = false;
+      else if (char === '\\') escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      normalized += char;
+      continue;
+    }
+    if (char === ',') {
+      let nextIndex = index + 1;
+      while (/\s/.test(output[nextIndex] ?? '')) nextIndex += 1;
+      if (output[nextIndex] === '}' || output[nextIndex] === ']') continue;
+    }
+    normalized += char;
+  }
+  return normalized;
 }
 
 function dedupePackages(packages: PackageInfo[]): PackageInfo[] {
