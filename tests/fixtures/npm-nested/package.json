@@ -1,0 +1,1 @@
+{"name":"nested-fixture","dependencies":{"outer":"1.0.0","@nested/node_modules-inner":"3.0.0","@scope/with-node_modules-token":"2.0.0"}}

@@ -30,6 +30,17 @@ test('parses npm package-lock and marks manifest dependencies direct', () => {
   assert.equal(lock.packages.find((pkg) => pkg.name === 'left-pad')?.direct, true);
 });
 
+test('preserves full npm package names when package paths contain nested node_modules segments', () => {
+  const lock = parseLockfile(fixture('npm-nested/package-lock.json'));
+  assert.equal(lock.packageCount, 4);
+  assert.deepEqual(lock.packages.map(({ name, direct }) => ({ name, direct })), [
+    { name: '@nested/node_modules-inner', direct: true },
+    { name: '@scope/with-node_modules-token', direct: true },
+    { name: 'ordinary', direct: false },
+    { name: 'outer', direct: true }
+  ]);
+});
+
 test('diff classifies added and upgraded direct dependencies', () => {
   const report = diffLockfiles(fixture('npm-a/package-lock.json'), fixture('npm-b/package-lock.json'));
   assert.equal(report.summary.total, 2);
