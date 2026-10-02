@@ -107,6 +107,9 @@ function parseNpmLock(content: string, source: string, manifest: ManifestInfo | 
     for (const [location, info] of Object.entries(packageMap)) {
       if (!location || !location.includes('node_modules/')) continue;
       const name = location.slice(location.lastIndexOf('node_modules/') + 'node_modules/'.length);
+      // npm's nested installation path separates the containing package from the
+      // installed package with `/node_modules/`; literal occurrences in a name
+      // (for example `node_modules-inner`) are not path separators.
       const version = typeof info.version === 'string' ? info.version : null;
       if (name && version) packages.push({ name, version, direct: direct.has(name), source });
     }
